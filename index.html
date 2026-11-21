@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Analytics Dashboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Tailwind custom config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#3b82f6', dark: '#2563eb' },
+            secondary: { DEFAULT: '#8b5cf6', dark: '#7c3aed' },
+            success:   { DEFAULT: '#10b981', dark: '#059669' },
+            warning:   { DEFAULT: '#f59e0b', dark: '#d97706' },
+            danger:    { DEFAULT: '#ef4444', dark: '#dc2626' },
+            surface:   '#f8fafc',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <!-- Logo icon -->
+        <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">Sales Analytics Dashboard</h1>
+          <p class="text-xs text-slate-400">Fiscal Year 2024 · Real-time Insights</p>
+        </div>
+      </div>
+      <!-- Active filter badge -->
+      <div id="filter-badge" class="hidden items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-700 font-medium">
+        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.553.894l-4 2A1 1 0 016 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+        </svg>
+        <span id="filter-badge-text">Filters active</span>
+        <button id="clear-filters-btn" class="ml-1 text-blue-500 hover:text-blue-700 font-bold leading-none" title="Clear all filters">×</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ---- FILTER PANEL ---- -->
+    <section aria-label="Filters" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+        </svg>
+        <h2 class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Filters</h2>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <!-- Region -->
+        <div class="flex flex-col gap-1">
+          <label for="filter-region" class="text-xs font-medium text-slate-500">Region</label>
+          <select id="filter-region" class="filter-select">
+            <option value="all">All Regions</option>
+          </select>
+        </div>
+        <!-- Category -->
+        <div class="flex flex-col gap-1">
+          <label for="filter-category" class="text-xs font-medium text-slate-500">Product Category</label>
+          <select id="filter-category" class="filter-select">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+        <!-- Customer Type -->
+        <div class="flex flex-col gap-1">
+          <label for="filter-customer" class="text-xs font-medium text-slate-500">Customer Type</label>
+          <select id="filter-customer" class="filter-select">
+            <option value="all">All Types</option>
+          </select>
+        </div>
+        <!-- Sales Channel -->
+        <div class="flex flex-col gap-1">
+          <label for="filter-channel" class="text-xs font-medium text-slate-500">Sales Channel</label>
+          <select id="filter-channel" class="filter-select">
+            <option value="all">All Channels</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- KPI CARDS ---- -->
+    <section aria-label="Key Performance Indicators">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Total Revenue -->
+        <article class="kpi-card border-l-4 border-primary">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="kpi-label">Total Revenue</p>
+              <p id="kpi-revenue" class="kpi-value">$0</p>
+              <p id="kpi-revenue-sub" class="kpi-sub">— transactions</p>
+            </div>
+            <div class="kpi-icon bg-blue-50 text-primary">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        <!-- Total Transactions -->
+        <article class="kpi-card border-l-4 border-secondary">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="kpi-label">Total Transactions</p>
+              <p id="kpi-transactions" class="kpi-value">0</p>
+              <p id="kpi-transactions-sub" class="kpi-sub">— records</p>
+            </div>
+            <div class="kpi-icon bg-purple-50 text-secondary">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        <!-- Total Quantity Sold -->
+        <article class="kpi-card border-l-4 border-success">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="kpi-label">Total Qty Sold</p>
+              <p id="kpi-quantity" class="kpi-value">0</p>
+              <p id="kpi-quantity-sub" class="kpi-sub">— units</p>
+            </div>
+            <div class="kpi-icon bg-emerald-50 text-success">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        <!-- Average Discount -->
+        <article class="kpi-card border-l-4 border-warning">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="kpi-label">Avg Discount</p>
+              <p id="kpi-discount" class="kpi-value">0%</p>
+              <p id="kpi-discount-sub" class="kpi-sub">— across all txns</p>
+            </div>
+            <div class="kpi-icon bg-amber-50 text-warning">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M7.5 16.5l9-9M9 10a1 1 0 11-2 0 1 1 0 012 0zm8 4a1 1 0 11-2 0 1 1 0 012 0z"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ---- CHARTS ROW 1: Trend + Region ---- -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <article class="chart-card lg:col-span-2">
+        <div class="chart-header">
+          <h3 class="chart-title">Sales Trend (Monthly Revenue)</h3>
+          <span class="chart-badge">Line Chart</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-trend"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenue per Region</h3>
+          <span class="chart-badge">Polar Area</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-region"></canvas>
+        </div>
+      </article>
+    </div>
+
+    <!-- ---- CHARTS ROW 2: Category + Sales Rep ---- -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenue per Product Category</h3>
+          <span class="chart-badge">Doughnut</span>
+        </div>
+        <div class="chart-body chart-body--sm">
+          <canvas id="chart-category"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Sales per Sales Representative</h3>
+          <span class="chart-badge">Horizontal Bar</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-rep"></canvas>
+        </div>
+      </article>
+    </div>
+
+    <!-- ---- CHARTS ROW 3: Customer Type + Payment + Channel ---- -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Customer Type Distribution</h3>
+          <span class="chart-badge">Pie</span>
+        </div>
+        <div class="chart-body chart-body--sm">
+          <canvas id="chart-customer"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Payment Method Usage</h3>
+          <span class="chart-badge">Doughnut</span>
+        </div>
+        <div class="chart-body chart-body--sm">
+          <canvas id="chart-payment"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Sales Channel Distribution</h3>
+          <span class="chart-badge">Bar</span>
+        </div>
+        <div class="chart-body chart-body--sm">
+          <canvas id="chart-channel"></canvas>
+        </div>
+      </article>
+    </div>
+
+    <!-- ---- CHARTS ROW 4: Scatter + Top 10 ---- -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Discount vs Revenue</h3>
+          <span class="chart-badge">Scatter Plot</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-scatter"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Top 10 Highest Revenue Transactions</h3>
+          <span class="chart-badge">Bar Chart</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-top10"></canvas>
+        </div>
+      </article>
+    </div>
+
+    <!-- ---- CHARTS ROW 5: Quantity per Category ---- -->
+    <article class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Quantity Sold per Category</h3>
+        <span class="chart-badge">Bar Chart</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="chart-qty-category"></canvas>
+      </div>
+    </article>
+
+    <!-- ---- DATA TABLE (last 10 filtered records) ---- -->
+    <article class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="chart-header border-b border-slate-100">
+        <h3 class="chart-title">Recent Transactions</h3>
+        <span id="table-count" class="chart-badge">0 records</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">
+            <tr>
+              <th class="px-4 py-3 font-semibold">Date</th>
+              <th class="px-4 py-3 font-semibold">Product</th>
+              <th class="px-4 py-3 font-semibold">Region</th>
+              <th class="px-4 py-3 font-semibold">Category</th>
+              <th class="px-4 py-3 font-semibold">Sales Rep</th>
+              <th class="px-4 py-3 font-semibold">Channel</th>
+              <th class="px-4 py-3 font-semibold text-right">Revenue</th>
+              <th class="px-4 py-3 font-semibold text-right">Discount</th>
+            </tr>
+          </thead>
+          <tbody id="data-table-body" class="divide-y divide-slate-100">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="mt-10 pb-8 text-center text-xs text-slate-400">
+    Sales Analytics Dashboard &copy; 2024 &mdash; Data sourced from <code>sales_data.json</code>
+  </footer>
+
+  <!-- Main script -->
+  <script src="script.js"></script>
+
+</body>
+</html>
